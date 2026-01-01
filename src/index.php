@@ -1,5 +1,16 @@
 <?php
 
+// Error reporting configuration (disable display in production)
+$isProduction = getenv('APP_ENV') === 'production';
+if ($isProduction) {
+    error_reporting(0);
+    ini_set('display_errors', '0');
+} else {
+    error_reporting(E_ALL);
+    ini_set('display_errors', '1');
+}
+ini_set('log_errors', '1');
+
 // Security headers
 header("X-Content-Type-Options: nosniff");
 header("X-Frame-Options: DENY");
@@ -11,8 +22,29 @@ require_once __DIR__ . '/../vendor/autoload.php';
 $loader = new \Twig\Loader\FilesystemLoader(__DIR__ . '/templates');
 $twig = new \Twig\Environment($loader, [
     'cache' => __DIR__ . '/../cache/twig',
-    'auto_reload' => true,
+    'auto_reload' => !$isProduction,
+    'debug' => !$isProduction,
 ]);
+
+// Global exception handler
+set_exception_handler(function (Throwable $e) use ($twig, $isProduction) {
+    http_response_code(500);
+    
+    if ($isProduction) {
+        echo $twig->render('error.twig', [
+            'title' => '500 Internal Server Error',
+            'message' => 'An unexpected error occurred. Please try again later.',
+        ]);
+    } else {
+        echo $twig->render('error.twig', [
+            'title' => '500 Internal Server Error',
+            'message' => $e->getMessage(),
+            'trace' => $e->getTraceAsString(),
+        ]);
+    }
+    
+    error_log($e->getMessage() . "\n" . $e->getTraceAsString());
+});
 
 // Parse and sanitize the request path
 $rawPath = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
