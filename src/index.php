@@ -77,13 +77,13 @@ switch ($path) {
     case '/':
     case '/home':
         echo $twig->render('landing.twig', [
-            'title' => 'Landing Page',
+            'title' => 'Twig Starter Template',
         ]);
         break;
 
-    case '/dashboard':
-        echo $twig->render('dashboard.twig', [
-            'title' => 'Dashboard',
+    case '/docs':
+        echo $twig->render('docs.twig', [
+            'title' => 'Documentation',
         ]);
         break;
 
